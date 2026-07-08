@@ -92,7 +92,29 @@ int main() {
 
     drogon::app().registerBeginningAdvice([&]() { initDatabase(); });
 
-    LOG_INFO << "Server starting on http://127.0.0.1:8080";
+    LOG_INFO << "Server starting on http://0.0.0.0:8080";
+
+    // === CORS 预检请求处理 ===
+    drogon::app().registerPreHandlingAdvice(
+        [](const drogon::HttpRequestPtr &req,
+        drogon::AdviceCallback &&callback,
+        drogon::AdviceChainCallback &&chainCallback) {
+            auto resp = drogon::HttpResponse::newHttpResponse();
+            resp->addHeader("Access-Control-Allow-Origin", "*");
+            resp->addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            resp->addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            if (req->method() == drogon::Options) {
+                callback(resp);  // 直接返回 OPTIONS，不进入业务逻辑
+                return;
+            }
+            chainCallback();  // 正常请求继续往下走
+        });
+// === CORS 响应头注入 ===
+    drogon::app().registerPostHandlingAdvice(
+        [](const drogon::HttpRequestPtr &, const drogon::HttpResponsePtr &resp) {
+            resp->addHeader("Access-Control-Allow-Origin", "*");
+        });
+
     drogon::app().run();
     return 0;
 }
