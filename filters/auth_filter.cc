@@ -30,9 +30,6 @@ void AuthFilter::doFilter(const drogon::HttpRequestPtr& req,
                            drogon::FilterChainCallback&& fccb) {
     auto authHeader = req->getHeader("Authorization");
 
-    LOG_INFO << "[AuthFilter] raw Authorization header ("
-             << authHeader.size() << " bytes): '" << authHeader << "'";
-
     if (authHeader.empty()) {
         fcb(utils::makeResponse(401, "未提供认证令牌"));
         return;
@@ -51,9 +48,6 @@ void AuthFilter::doFilter(const drogon::HttpRequestPtr& req,
 
     token = sanitizeToken(token);
 
-    LOG_INFO << "[AuthFilter] sanitized token (" << token.size() << " chars): '"
-             << token.substr(0, 30) << "...'";
-
     auto& config = drogon::app().getCustomConfig();
     std::string secret = config.get("jwt_secret", "default-secret").asString();
 
@@ -64,13 +58,10 @@ void AuthFilter::doFilter(const drogon::HttpRequestPtr& req,
         return;
     }
 
-    LOG_INFO << "[AuthFilter] decoded payload: '" << payload << "'";
-
     Json::Value payloadJson;
     Json::Reader reader;
     if (!reader.parse(payload, payloadJson)) {
-        LOG_ERROR << "[AuthFilter] JSON parse failed for payload: '" << payload << "'";
-        LOG_ERROR << "[AuthFilter] parse error: "
+        LOG_ERROR << "[AuthFilter] JSON parse error: "
                   << reader.getFormattedErrorMessages();
         fcb(utils::makeResponse(401, "令牌解析失败"));
         return;

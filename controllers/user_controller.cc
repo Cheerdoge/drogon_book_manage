@@ -85,6 +85,8 @@ void UserController::login(const drogon::HttpRequestPtr& req,
     Json::Value data;
     data["token"] = token;
     data["user"] = user->toJson();
+
+    LOG_INFO << "用户 [" << user->username << "] 登录成功";
     callback(utils::makeResponse(200, "登录成功", data));
 }
 

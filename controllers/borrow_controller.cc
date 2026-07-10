@@ -58,6 +58,8 @@ void BorrowController::borrowBook(const drogon::HttpRequestPtr& req,
 
     if (model::BorrowRecord::borrow(userId, bookId, dueDate)) {
         model::Book::updateStatus(bookId, "borrowed");
+        LOG_INFO << "用户 [" << req->attributes()->get<std::string>("username")
+                 << "] 借阅了《" << book->title << "》";
         callback(utils::makeResponse(200, "借阅成功"));
     } else {
         callback(utils::makeResponse(500, "借阅失败"));
@@ -87,6 +89,9 @@ void BorrowController::returnBook(const drogon::HttpRequestPtr& req,
 
     if (model::BorrowRecord::returnBook(recordId)) {
         model::Book::updateStatus(bookId, "available");
+        auto book = model::Book::findById(bookId);
+        LOG_INFO << "用户 [" << req->attributes()->get<std::string>("username")
+                 << "] 归还了《" << (book.has_value() ? book->title : "未知") << "》";
         callback(utils::makeResponse(200, "归还成功"));
     } else {
         callback(utils::makeResponse(500, "归还失败"));
